@@ -6,7 +6,7 @@ My demo for PyQT and VTK programming, based on my paper on waveguide+nano-antenn
 
 ## Screenshot
 
-![i'll put it here when I'm done](meow.png)
+![i'll put it here when I'm done](screenshot.png)
 
 ## Credit
 
