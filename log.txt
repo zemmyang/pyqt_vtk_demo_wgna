@@ -1,0 +1,5 @@
+2021-01-27 17:14:10,757-INFO-FILE:main.py-FUNC:main-LINE:5-Program started
+2021-01-27 17:14:10,947-INFO-FILE:main_window.py-FUNC:load-LINE:59-Loaded file: data.json
+2021-01-27 17:14:10,953-DEBUG-FILE:main_window.py-FUNC:__init__-LINE:113-Tab Widget view done.
+2021-01-27 17:14:10,953-DEBUG-FILE:main_window.py-FUNC:__init__-LINE:87-Main Window view done.
+2021-01-27 17:14:10,959-INFO-FILE:main.py-FUNC:main-LINE:10-Program closing

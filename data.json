@@ -1,0 +1,54 @@
+{
+   "model3d":[
+      {
+         "name":"cone",
+         "filename":"cone.stl",
+         "display":"Circular Cone",
+         "xlength":140,
+         "ylength":140,
+         "zlength":60,
+         "ab_ratio": 2.7,
+         "gs_energy": 0.86
+      },
+      {
+         "name":"cube_100",
+         "filename":"cube_100.stl",
+         "display":"Cube (side = 100 nm)",
+         "xlength":100,
+         "ylength":100,
+         "zlength":100,
+         "ab_ratio": 2.5,
+         "gs_energy": 1.07
+      },
+      {
+         "name":"hemisphere_100",
+         "filename":"hemisphere_100.stl",
+         "display":"Hemisphere (radius = 50 nm)",
+         "xlength":100,
+         "ylength":100,
+         "zlength":100,
+         "ab_ratio": 2.6,
+         "gs_energy": 0.86
+      },
+      {
+         "name":"hemiellipse_b",
+         "filename":"heb.stl",
+         "display":"Hemiellipse",
+         "xlength":120,
+         "ylength":60,
+         "zlength":60,
+         "ab_ratio": 2.75,
+         "gs_energy": 1.36
+      },
+      {
+         "name":"toroid",
+         "filename":"toroid.stl",
+         "display":"Toroid",
+         "xlength":300,
+         "ylength":300,
+         "zlength":50,
+         "ab_ratio": 5.0,
+         "gs_energy": 1.5
+      }
+   ]
+}
