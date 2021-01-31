@@ -1,6 +1,74 @@
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import pyqtSlot, Qt
 import config as CFG
 
+
+class Settings3DView(QDialog):
+    def __init__(self, parent):
+        super().__init__()
+        _layout = QVBoxLayout()
+        self.setLayout(_layout)
+
+        self._title = CFG.SETTINGS_3D_VIEW_TITLE
+        self._left = 0
+        self._top = 0
+        self._width = CFG.SETTINGS_3D_VIEW_SIZE[0]
+        self._height = CFG.SETTINGS_3D_VIEW_SIZE[1]
+        self.setWindowTitle(self._title)
+        self.setGeometry(self._left, self._top, self._width, self._height)
+
+        # show diagram labels
+        self._hide_labels = QCheckBox("Show Diagram Labels")
+        self._hide_labels.setChecked(True)
+        _layout.addWidget(self._hide_labels)
+
+        # hide substrate
+        self._hide_substrate = QCheckBox("Hide Substrate")
+        self._hide_substrate.setChecked(True)
+        _layout.addWidget(self._hide_substrate)
+
+        # background to scale (disabling this makes the waveguide smaller)
+        self._bg_to_scale = QCheckBox("Set background to scale")
+        self._bg_to_scale.setChecked(True)
+        _layout.addWidget(self._bg_to_scale)
+
+        # adjust nano-antenna opacity
+        _na_opacity_label = QLabel("Adjust Nano-antenna Opacity")
+        _na_opacity_label.setMargin(0)
+        _na_opacity_label.setAlignment(Qt.AlignBottom)
+        _layout.addWidget(_na_opacity_label)
+        self._na_opacity_slider = QSlider(Qt.Horizontal)
+        _layout.addWidget(self._na_opacity_slider)
+
+        # adjust isosurface opacity
+        _iso_opacity_label = QLabel("Adjust Isosurface Opacity")
+        _iso_opacity_label.setMargin(0)
+        _iso_opacity_label.setAlignment(Qt.AlignBottom)
+        _layout.addWidget(_iso_opacity_label)
+        self._iso_opacity_slider = QSlider(Qt.Horizontal)
+        _layout.addWidget(self._iso_opacity_slider)
+
+        # hide x-y-z axes
+        self._hide_xyz_axes = QCheckBox("Hide XYZ axes")
+        _layout.addWidget(self._hide_xyz_axes)
+
+        # place axes at origin
+        self._xyz_at_origin = QCheckBox("XYZ axes at origin")
+        _layout.addWidget(self._xyz_at_origin)
+
+        # disable mouse-over
+        self._disable_mouseover = QCheckBox("Disable Mouse-over")
+        self._bg_to_scale.setChecked(True)
+        _layout.addWidget(self._disable_mouseover)
+
+        # save/cancel buttons
+        _buttons = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+
+        self._buttonBox = QDialogButtonBox(_buttons)
+        self._buttonBox.accepted.connect(self.accept)
+        self._buttonBox.rejected.connect(self.reject)
+
+        _layout.addWidget(self._buttonBox)
 
 class Settings2DView(QDialog):
     def __init__(self, parent):

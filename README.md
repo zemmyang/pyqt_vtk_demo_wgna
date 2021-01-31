@@ -4,9 +4,14 @@ My demo for PyQT and VTK programming, based on my paper on waveguide+nano-antenn
 * User can select of specific nanoantenna geometry
 * User can show the 3D optical potential field for a given nanoantenna geometry
 
+Future features:
+* 2D-cross-section to recreate Fig. 4 in the paper
+* Adjust the appearance from the GUI
+* Additional nano-antenna results not reported in the paper (Hemi-ellipse rotated 90deg, 60-nm cube/hemisphere, toroid variations)
+
 ## Screenshot
 
-![i'll put it here when I'm done](screenshot.png)
+![pics!](screenshot.png)
 
 ## Credit
 

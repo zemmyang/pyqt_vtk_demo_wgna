@@ -4,60 +4,11 @@ import os
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.Qt import *
+
 from dialog_boxes import *
-import json
+from model3d import Tab3DView
+from xsections import XSectionsView
 import config as CFG
-
-from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-
-
-class Tab3DModel(QAbstractTableModel):
-    """
-    usage: initialize with argument of the model name
-    returns a dict with all the info of the model like the file location, etc.
-    also handles the vtk stuff
-    """
-    def __init__(self):
-        super().__init__()
-        self.datafile_3d_dict = self.load()
-        self._update_paths()
-        self.header_labels = list(self.datafile_3d_dict[0].keys())
-
-    def rowCount(self, parent=None):
-        return len(self.datafile_3d_dict)
-
-    def columnCount(self, parent=None):
-        return len(self.datafile_3d_dict[0])
-
-    def index(self, row: int, column: int, parent=None):
-        return self.datafile_3d_dict[row][self.header_labels[column]]
-
-    def named_index(self, row: int, column, parent=None):
-        return self.datafile_3d_dict[row][column]
-
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
-        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return self.header_labels[section]
-        return QAbstractTableModel.headerData(self, section, orientation, role)
-
-    def _update_paths(self):
-        for i in range(self.rowCount()):
-            self.datafile_3d_dict[i]["nageom_path"] = os.path.join(CFG.FULLDIR_NAGEOM,
-                                                                   self.datafile_3d_dict[i]["filename"])
-            self.datafile_3d_dict[i]["iso_path"] = os.path.join(CFG.FULLDIR_ISOSURF,
-                                                                self.datafile_3d_dict[i]["filename"])
-
-    @staticmethod
-    def load():
-        try:
-            with open(CFG.FULLDIR_DATASTORE, 'r') as f:
-                _full_datafile = json.load(f)
-        except Exception as err:
-            print(err)
-            sys.exit(0)
-        else:
-            CFG.logger.info("Loaded file: " + str(CFG.FULLDIR_DATASTORE))
-            return json.loads(json.dumps(_full_datafile["model3d"]))
 
 
 class MainWindow(QMainWindow):
@@ -125,177 +76,127 @@ class LoggerView(QTabWidget):
         self.textbox.setReadOnly(True)
 
 
-class Tab3DView(QTabWidget):
+########################################################################################################################
+from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+from vtk.util import numpy_support
+from scipy.io import loadmat
+
+class ViewExperimentalVTKTab(QTabWidget):
     """
-    view for the 3D tab
-    completion: 70%
-    TODO: make buttons show isosurfaces
+    for debugging VTK stuff
+    TODO: REMOVE THIS
     """
     def __init__(self, parent):
         super(QTabWidget, self).__init__(parent)
-        self.layout = QVBoxLayout()
-        self._tab_3d_model = Tab3DModel()
+        layout = QVBoxLayout()
+        self.setLayout(layout)
 
-        self.setLayout(self.layout)
+        test_gb = QGroupBox("test groupbox")
+        layout.addWidget(test_gb)
 
-        self._nageomradio_groupbox = QGroupBox("Nano-antenna Geometry")
-        self.layout.addWidget(self._nageomradio_groupbox)
+        hbox = QHBoxLayout()
+        test_gb.setLayout(hbox)
 
-        self._frame = QFrame()
-        self._vl = QVBoxLayout()
-        self._vtkWidget = QVTKRenderWindowInteractor(self._frame)
-        self._vl.addWidget(self._vtkWidget)
+        button_test = QRadioButton("test button")
+        hbox.addWidget(button_test)
+        button_test.toggled.connect(self.button_test)
 
-        self._labels = [str(self._tab_3d_model.named_index(i, "display"))
-                        for i in range(self._tab_3d_model.rowCount())]
+        button_test2 = QRadioButton("test button2")
+        hbox.addWidget(button_test2)
+        button_test2.toggled.connect(self.button_test2)
 
-        self._colors = vtk.vtkNamedColors()
-        self._set_vtk()
-        self._set_groupbox_buttons()
+        self.frame = QFrame()
+        self.vl = QVBoxLayout()
+        self.vtkWidget = QVTKRenderWindowInteractor(self.frame)
+        self.vl.addWidget(self.vtkWidget)
 
+        # Create wg_source
+        wg_source = vtk.vtkCubeSource()
+        wg_source.SetCenter(0, 0, -0.534*100/2)
 
-    def _set_groupbox_buttons(self):
-        _grouphbox = QHBoxLayout()
-        self._nageomradio_groupbox.setLayout(_grouphbox)
-
-        for i in range(self._tab_3d_model.rowCount()):
-            _display_text = self._tab_3d_model.named_index(i, "display")
-            _iso_path = self._tab_3d_model.named_index(i, "iso_path")
-            _na_path = self._tab_3d_model.named_index(i, "nageom_path")
-            _button = QRadioButton(_display_text)
-            _button.clicked.connect(lambda checked, a=_na_path: self.activate_button(a))
-
-            # _button.stateChanged.connect(self.remove_previous_display)
-            CFG.logg.debug("Connecting " + self._tab_3d_model.named_index(i, "display") + " button to actions.")
-            _grouphbox.addWidget(_button)
-
-        _test_labels = [QLabel(self._tab_3d_model.named_index(i, "iso_path"))
-                        for i in range(self._tab_3d_model.rowCount())]
-
-        self.placeholder = QLabel()
-        self.layout.addWidget(self.placeholder)
-
-    def _set_vtk(self):
-        self._ren = vtk.vtkRenderer()
-        self._vtkWidget.GetRenderWindow().AddRenderer(self._ren)
-        self._iren = self._vtkWidget.GetRenderWindow().GetInteractor()
-
-        self._ren.AddActor(self._set_axes_vtk())
-        self._ren.AddActor(self._set_wg_vtk())
-        self._ren.SetActiveCamera(self._set_camera_vtk())
-
-        self._frame.setLayout(self._vl)
-        self.layout.addWidget(self._frame)
-
-        self.show()
-        self._iren.Initialize()
-        self._iren.Start()
-
-        _dummy_actor = vtk.vtkActor()
-        self._ren.AddActor(_dummy_actor)
-
-    @staticmethod
-    def _set_axes_vtk():
-        _axes_transform = vtk.vtkTransform()
-        _axes_transform.Translate(-0.5, -0.5, 0.0)
-
-        _axes_actor = vtk.vtkAxesActor()
-        _axes_actor.SetUserTransform(_axes_transform)
-        return _axes_actor
-
-    @staticmethod
-    def _set_camera_vtk():
-        _camera = vtk.vtkCamera()
-        _camera.SetViewUp(1, 1, 1)
-        _camera.SetPosition(5, 5, 2)
-        _camera.SetFocalPoint(0, 0, 0)
-        return _camera
-
-    @staticmethod
-    def _set_wg_vtk():
-        # create a source
-        _wg_source = vtk.vtkCubeSource()
-        _wg_source.SetCenter(0, 0, -0.534 / 2)
-
-        _wg_source.SetXLength(4.000)
-        _wg_source.SetYLength(1.560)
-        _wg_source.SetZLength(0.534)
-        _wg_source.Update()
+        wg_source.SetXLength(4.000*100)
+        wg_source.SetYLength(1.560*100)
+        wg_source.SetZLength(0.534*100)
+        wg_source.Update()
 
         # Create a mapper
-        _wg_mapper = vtk.vtkPolyDataMapper()
-        _wg_mapper.SetInputConnection(_wg_source.GetOutputPort())
+        wg_mapper = vtk.vtkPolyDataMapper()
+        wg_mapper.SetInputConnection(wg_source.GetOutputPort())
 
-        _wg_actor = vtk.vtkActor()
-        _wg_actor.SetMapper(_wg_mapper)
-        CFG.logg.debug("setting up waveguide in 3D View.")
-        return _wg_actor
+        wg_actor = vtk.vtkActor()
+        wg_actor.SetMapper(wg_mapper)
 
-    def _set_iso_vtk(self, filename):
-        _iso_stlreader = vtk.vtkSTLReader()
-        _iso_stlreader.SetFileName(filename)
+        self.colors = vtk.vtkNamedColors()
 
-        _iso_mapper = vtk.vtkPolyDataMapper()
-        _iso_mapper.SetInputConnection(_iso_stlreader.GetOutputPort())
+        self.ren = vtk.vtkRenderer()
+        self.ren.SetBackground(0, 0, 0)
+        self.vtkWidget.GetRenderWindow().AddRenderer(self.ren)
+        self.iren = self.vtkWidget.GetRenderWindow().GetInteractor()
 
-        _iso_actor = vtk.vtkActor()
-        _iso_actor.SetMapper(_iso_mapper)
-        _iso_actor.GetProperty().SetDiffuseColor(self._colors.GetColor3d('Blue'))
+        frommat = loadmat("toroid_isosurf_data.mat")
+        export = frommat["export"].T # transpose the data
+        gs_export = frommat["gs_export"]
 
-        _iso_transform = vtk.vtkTransform()
-        _iso_transform.RotateZ(90)
-        _iso_transform.Translate(0, 0, 0.35)
-        _iso_actor.SetUserTransform(_iso_transform)
+        vtk_data_array = numpy_support.numpy_to_vtk(num_array=export.ravel(), deep=True, array_type=vtk.VTK_FLOAT)
 
-        return _iso_actor
+        img_vtk = vtk.vtkStructuredPoints()
+        img_vtk.SetOrigin(0, 0, 0)
+        img_vtk.SetDimensions(export.shape[::-1])
+        img_vtk.GetPointData().SetScalars(vtk_data_array)
 
-    def _set_na_vtk(self, filename):
-        _na_stlreader = vtk.vtkSTLReader()
-        _na_stlreader.SetFileName(filename)
+        contours = vtk.vtkContourFilter()
+        contours.SetInputData(img_vtk)
+        contours.SetValue(0, gs_export)
 
-        _na_mapper = vtk.vtkPolyDataMapper()
-        _na_mapper.SetInputConnection(_na_stlreader.GetOutputPort())
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(contours.GetOutputPort())
 
-        _na_actor = vtk.vtkActor()
-        _na_actor.SetMapper(_na_mapper)
-        _na_actor.GetProperty().SetDiffuseColor(self._colors.GetColor3d('Blue'))
+        actor = vtk.vtkActor()
+        actor.SetMapper(mapper)
 
-        return _na_actor
+        _axes_actor = vtk.vtkAxesActor()
+        # self.ren.AddActor(_axes_actor)
+        self.ren.AddActor(actor)
+        self.ren.AddActor(wg_actor)
 
-    @pyqtSlot(str)
-    def on_button(self, b):
-        self.placeholder.setText(b)
+        # set camera
+        camera = vtk.vtkCamera()
+        camera.SetViewUp(1, 1, 1)
+        camera.SetPosition(500, 500, 200)
+        camera.SetFocalPoint(0, 0, 0)
 
-    @pyqtSlot(str)
-    def activate_button(self, filename):
-        self._ren.RemoveActor(self._ren.GetActors().GetLastActor())
-        self._iren.ReInitialize()
+        self.ren.SetActiveCamera(camera)
 
-        # self._ren.AddActor(self._set_iso_vtk(filename))
-        self._ren.AddActor(self._set_na_vtk(filename))
-        CFG.logg.info("Showing " + filename + " in 3D View.")
-        self._iren.ReInitialize()
+        self.frame.setLayout(self.vl)
+        layout.addWidget(self.frame)
 
+        self.show()
+        self.iren.Initialize()
+        self.iren.Start()
 
-class XSectionsView(QTabWidget):
-    """
-    view for the cross-section tab
-    completion: 10%
-    TODO: A LOT
-    """
-    def __init__(self, parent):
-        super(QTabWidget, self).__init__(parent)
-        self.layout = QVBoxLayout(self)
+    def button_test(self, enabled):
+        if enabled:
+            iso_stlreader = vtk.vtkSTLReader()
+            iso_stlreader.SetFileName("stl/iso/toroid.stl")
 
-        self.placeholder_text = QLabel("placeholder text tab 2")
-        self.layout.addWidget(self.placeholder_text)
-        self.setStatusTip("aaaaaaaa")
+            iso_mapper = vtk.vtkPolyDataMapper()
+            iso_mapper.SetInputConnection(iso_stlreader.GetOutputPort())
 
-        settings_button = QPushButton("settings")
-        settings_button.clicked.connect(self.open_xsection_settings)
-        self.layout.addWidget(settings_button)
+            self.iso_actor = vtk.vtkActor()
+            self.iso_actor.SetMapper(iso_mapper)
+            self.iso_actor.GetProperty().SetDiffuseColor(self.colors.GetColor3d('Blue'))
 
-    def open_xsection_settings(self):
-        dlg = Settings2DView(self)
-        # dlg.setWindowTitle("HELLO!")
-        dlg.exec_()
+            iso_transform = vtk.vtkTransform()
+            iso_transform.RotateZ(90)
+            iso_transform.Translate(0, 0, 0.35)
+            self.iso_actor.SetUserTransform(iso_transform)
+
+            self.ren.AddActor(self.iso_actor)
+
+            self.iren.ReInitialize()
+
+    def button_test2(self, enabled):
+        if enabled:
+            self.ren.RemoveActor(self.iso_actor)
+
+            self.iren.ReInitialize()
