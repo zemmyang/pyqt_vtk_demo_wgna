@@ -1,6 +1,21 @@
 from main_window import *
 from config import logger
 
+import sys
+import vtk
+import os
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.Qt import *
+
+import zipfile
+import json
+import h5py
+import scipy.constants as const
+from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+from vtk.util import numpy_support
+
+
 def main():
     logger.info("Program started")
     app = QApplication(sys.argv)

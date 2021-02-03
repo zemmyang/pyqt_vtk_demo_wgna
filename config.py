@@ -2,6 +2,9 @@
 FOLDER_DATASTORE = ""
 DATASTORE = "data.zip"
 DATASTORE_CONFIG = "data.json"
+JSON_LENGTH_UNITS_IN_NM = True
+
+DEBUG_MODE = False  # show features in-progress
 
 ####################################
 ###       INTERNAL CONFIG        ###

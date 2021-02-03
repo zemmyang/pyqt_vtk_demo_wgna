@@ -74,12 +74,14 @@ class LoggerView(QTabWidget):
 
         self.textbox.insertPlainText(CFG.string_stream.getvalue())
         self.textbox.setReadOnly(True)
+        self.textbox.setStatusTip("Viewing the Log")
 
 
 ########################################################################################################################
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtk.util import numpy_support
 from scipy.io import loadmat
+from vtk_actor_translate import VTKSpecificActor
 
 class ViewExperimentalVTKTab(QTabWidget):
     """
@@ -97,34 +99,18 @@ class ViewExperimentalVTKTab(QTabWidget):
         hbox = QHBoxLayout()
         test_gb.setLayout(hbox)
 
-        button_test = QRadioButton("test button")
-        hbox.addWidget(button_test)
-        button_test.toggled.connect(self.button_test)
-
-        button_test2 = QRadioButton("test button2")
-        hbox.addWidget(button_test2)
-        button_test2.toggled.connect(self.button_test2)
+        # button_test = QRadioButton("test button")
+        # hbox.addWidget(button_test)
+        # button_test.toggled.connect(self.button_test)
+        #
+        # button_test2 = QRadioButton("test button2")
+        # hbox.addWidget(button_test2)
+        # button_test2.toggled.connect(self.button_test2)
 
         self.frame = QFrame()
         self.vl = QVBoxLayout()
         self.vtkWidget = QVTKRenderWindowInteractor(self.frame)
         self.vl.addWidget(self.vtkWidget)
-
-        # Create wg_source
-        wg_source = vtk.vtkCubeSource()
-        wg_source.SetCenter(0, 0, -0.534*100/2)
-
-        wg_source.SetXLength(4.000*100)
-        wg_source.SetYLength(1.560*100)
-        wg_source.SetZLength(0.534*100)
-        wg_source.Update()
-
-        # Create a mapper
-        wg_mapper = vtk.vtkPolyDataMapper()
-        wg_mapper.SetInputConnection(wg_source.GetOutputPort())
-
-        wg_actor = vtk.vtkActor()
-        wg_actor.SetMapper(wg_mapper)
 
         self.colors = vtk.vtkNamedColors()
 
@@ -133,36 +119,11 @@ class ViewExperimentalVTKTab(QTabWidget):
         self.vtkWidget.GetRenderWindow().AddRenderer(self.ren)
         self.iren = self.vtkWidget.GetRenderWindow().GetInteractor()
 
-        frommat = loadmat("toroid_isosurf_data.mat")
-        export = frommat["export"].T # transpose the data
-        gs_export = frommat["gs_export"]
-
-        vtk_data_array = numpy_support.numpy_to_vtk(num_array=export.ravel(), deep=True, array_type=vtk.VTK_FLOAT)
-
-        img_vtk = vtk.vtkStructuredPoints()
-        img_vtk.SetOrigin(0, 0, 0)
-        img_vtk.SetDimensions(export.shape[::-1])
-        img_vtk.GetPointData().SetScalars(vtk_data_array)
-
-        contours = vtk.vtkContourFilter()
-        contours.SetInputData(img_vtk)
-        contours.SetValue(0, gs_export)
-
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputConnection(contours.GetOutputPort())
-
-        actor = vtk.vtkActor()
-        actor.SetMapper(mapper)
-
-        _axes_actor = vtk.vtkAxesActor()
-        # self.ren.AddActor(_axes_actor)
-        self.ren.AddActor(actor)
-        self.ren.AddActor(wg_actor)
+        test = VTKSpecificActor("torus", (1, 2, 3))
+        self.ren.AddActor(test.actor)
 
         # set camera
         camera = vtk.vtkCamera()
-        camera.SetViewUp(1, 1, 1)
-        camera.SetPosition(500, 500, 200)
         camera.SetFocalPoint(0, 0, 0)
 
         self.ren.SetActiveCamera(camera)
@@ -173,30 +134,30 @@ class ViewExperimentalVTKTab(QTabWidget):
         self.show()
         self.iren.Initialize()
         self.iren.Start()
-
-    def button_test(self, enabled):
-        if enabled:
-            iso_stlreader = vtk.vtkSTLReader()
-            iso_stlreader.SetFileName("stl/iso/toroid.stl")
-
-            iso_mapper = vtk.vtkPolyDataMapper()
-            iso_mapper.SetInputConnection(iso_stlreader.GetOutputPort())
-
-            self.iso_actor = vtk.vtkActor()
-            self.iso_actor.SetMapper(iso_mapper)
-            self.iso_actor.GetProperty().SetDiffuseColor(self.colors.GetColor3d('Blue'))
-
-            iso_transform = vtk.vtkTransform()
-            iso_transform.RotateZ(90)
-            iso_transform.Translate(0, 0, 0.35)
-            self.iso_actor.SetUserTransform(iso_transform)
-
-            self.ren.AddActor(self.iso_actor)
-
-            self.iren.ReInitialize()
-
-    def button_test2(self, enabled):
-        if enabled:
-            self.ren.RemoveActor(self.iso_actor)
-
-            self.iren.ReInitialize()
+    #
+    # def button_test(self, enabled):
+    #     if enabled:
+    #         iso_stlreader = vtk.vtkSTLReader()
+    #         iso_stlreader.SetFileName("stl/iso/toroid.stl")
+    #
+    #         iso_mapper = vtk.vtkPolyDataMapper()
+    #         iso_mapper.SetInputConnection(iso_stlreader.GetOutputPort())
+    #
+    #         self.iso_actor = vtk.vtkActor()
+    #         self.iso_actor.SetMapper(iso_mapper)
+    #         self.iso_actor.GetProperty().SetDiffuseColor(self.colors.GetColor3d('Blue'))
+    #
+    #         iso_transform = vtk.vtkTransform()
+    #         iso_transform.RotateZ(90)
+    #         iso_transform.Translate(0, 0, 0.35)
+    #         self.iso_actor.SetUserTransform(iso_transform)
+    #
+    #         self.ren.AddActor(self.iso_actor)
+    #
+    #         self.iren.ReInitialize()
+    #
+    # def button_test2(self, enabled):
+    #     if enabled:
+    #         self.ren.RemoveActor(self.iso_actor)
+    #
+    #         self.iren.ReInitialize()
